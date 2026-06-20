@@ -1,0 +1,36 @@
+{
+  "specVersion": "1.0.0",
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "name": "holeesheet",
+  "title": "HoleeSheet",
+  "version": "0.1.0",
+  "description": "HoleeSheet render pipeline — compile a simple story script into a Discord chat video and render it to MP4 (voices, SFX, music, images). Exposes the holeesheet MCP tools to the agent.",
+  "author": { "name": "HoleeSheet", "url": "https://github.com/nexu-io" },
+  "license": "MIT",
+  "tags": ["atom", "video", "discord", "render"],
+  "compat": {
+    "agentSkills": [{ "path": "./SKILL.md" }]
+  },
+  "od": {
+    "kind": "atom",
+    "mode": "generate",
+    "taskKind": "new-generation",
+    "capabilities": ["prompt:inject", "subprocess"],
+    "useCase": {
+      "query": "Write and render a HoleeSheet short-form Discord chat-drama video using the holeesheet MCP tools (make_episode, compile_script, render_episode, list_voices, submit_feedback)."
+    },
+    "context": {
+      "mcp": [
+        {
+          "id": "holeesheet",
+          "name": "holeesheet",
+          "enabled": true,
+          "transport": "stdio",
+          "label": "HoleeSheet (render pipeline)",
+          "command": "C:\\nvm4w\\nodejs\\node.exe",
+          "args": ["C:\\Users\\adowner.FSLADS\\Desktop\\Projects\\New folder\\opendesign\\HooLeeSheet\\HoleeSheet_Project\\tools\\mcp-server.mjs"]
+        }
+      ]
+    }
+  }
+}
