@@ -1,11 +1,10 @@
 ---
 name: holeesheet-discord-video
-description: Build a HoleeSheet short-form Discord-chat video from a render_package. Use when asked to render/build a HoleeSheet episode, a Discord chat video, or "the server".
+description: Build a HoleeSheet short-form Discord-chat video. Use when asked to render/build a HoleeSheet episode, a Discord chat video, or "the server".
 od:
   mode: video
   scenario: video
   design_system: discord
-  preview: ../../../render/discord-template.html
   inputs:
     - name: episode_id
       type: string
@@ -15,111 +14,102 @@ od:
 # HoleeSheet — Discord chat video
 
 You are generating a **vertical 9:16 short-form video of an animated Discord chat** for the
-HoleeSheet content engine. The data is a **render_package_v1** (the single source of truth).
-Everything you need is in this project (`HoleeSheet_Project/`). Prefer the project's own tools
-over re-inventing.
+HoleeSheet content engine. The data is a **render_package_v1**. Everything you need is in the
+HoleeSheet project — prefer its tools over re-inventing.
 
-## ⚡ THE WORKFLOW — use the HoleeSheet MCP, do NOT hand-roll HTML
-The fastest correct path to a real MP4 is three MCP tool calls. **Do not write your own
-`requestAnimationFrame` Discord composition** — without a paused GSAP timeline on
-`window.__timelines["main"]` it renders as a **frozen frame 0** (a broken video). If you must
-hand-author, run **`lint_composition`** on it first; it will tell you if it's un-renderable.
+> **Project root (run all commands from here):**
+> `C:\Users\adowner.FSLADS\Desktop\Projects\New folder\opendesign\HooLeeSheet\HoleeSheet_Project`
 
-1. **`compile_script`** — write the story in the simple format and we return a valid, renderable
-   `render_package_v1` (timestamps, timing, structure all correct):
-   ```
-   compile_script({
-     title: "Konoha Daily Insanity",
-     characters: [{name:"Naruto", color:"#ff8c00"}, {name:"Sasuke", color:"#5b7fc7"}],
-     script: [
-       {user:"Naruto", text:"OK TEAM MISSION TIME"},
-       {user:"Sasuke", type:"typing", delay:1000},
-       {user:"Sasuke", text:"fine"},
-       {user:"Sakura", type:"reaction", emoji:"💀"},        // targets the previous message
-       {user:"System", type:"system", text:"Naruto created a new server"}
-     ],
-     feedback: "what was hard / what capability you wished existed"   // REQUIRED — we read this
-   })
-   ```
-   `type` ∈ message | typing | reaction | ban | system | join | leave. `delay` = ms before the
-   event. `effect` = a meme effect name (e.g. "vine_boom"). Timestamps are computed for you — never
-   derive the clock yourself.
-2. **`render_episode({ package })`** — pass the package from step 1; returns a `job_id`.
-3. **`render_status({ job_id })`** — poll until `completed`, then use the MP4 path.
+## ⚡ THE WORKFLOW — run the CLI, do NOT hand-roll HTML
+The fastest correct path to a real MP4 is **one command**. Write the story as JSON, then run
+`tools/make.mjs`. It compiles your script into a valid render_package, renders the video
+(HyperFrames), and adds voices + SFX + music — and prints the MP4 path.
 
-**`submit_feedback`** anytime: friction, missing event types/effects/character features — anything
-that would help you write better stories. We use it to improve the tools.
+```bash
+cd "C:\Users\adowner.FSLADS\Desktop\Projects\New folder\opendesign\HooLeeSheet\HoleeSheet_Project"
 
-## Easiest path: write a simple script, let `compile_script` do the rest
-Don't hand-build a render_package or a raw HTML composition (a hand-rolled rAF page renders as a
-frozen frame 0 — `lint_composition` will tell you). Instead author the natural way and compile:
-
-```json
-{ "title":"Team 7 Group Chat",
-  "characters":[ {"name":"Naruto","avatar":"🦊","color":"#ff8c00"}, {"name":"Sasuke","avatar":"👁️"} ],
-  "extensions": { "css": ".text{font-style:italic}" },
-  "script":[
+cat > story.json <<'JSON'
+{ "title": "Konoha Daily Insanity",
+  "characters": [ {"name":"Naruto","color":"#ff8c00","voice":"Harry"},
+                  {"name":"Sasuke","color":"#5b7fc7"} ],
+  "script": [
     {"type":"act","title":"Episode 1","subtitle":"The Missing Ramen"},
-    {"user":"Naruto","text":"who took my ramen"},
+    {"user":"Naruto","text":"OK TEAM MISSION TIME"},
+    {"user":"Sasuke","type":"typing","delay":1000},
     {"user":"Sasuke","text":"not me","reply_to":"Naruto"},
     {"user":"Sakura","type":"reaction","emoji":"💀","react_to":"Naruto"},
-    {"user":"Naruto","type":"voice_note","seconds":4,"text":"I KNEW IT"} ] }
+    {"user":"System","type":"system","text":"Naruto created a new server"}
+  ] }
+JSON
+
+node tools/make.mjs story.json            # -> prints renders\<id>.mp4
 ```
-`compile_script` → a valid, renderable render_package. Then `render_episode {package}` → MP4.
-**Flexibility (use it):** `react_to`/`reply_to` by **character name** or `"last"` (no event ids);
-emoji `avatar` per character; `type:"act"` chapter cards; `type:"voice_note"`; and **`extensions.css`**
-for anything we don't model yet. If something's still too rigid, `submit_feedback` — that's how the
-contract grows.
 
-**Voices:** call **`list_voices`** to see the cast you can use, then set `voice: "<name>"` on a
-character (e.g. `{"name":"Naruto","voice":"Harry"}`) or override a single line with `voice` on that
-script entry. Names resolve automatically (e.g. "Charlie" → its id).
+**Do NOT write your own `requestAnimationFrame` Discord composition.** Without a paused GSAP
+timeline on `window.__timelines["main"]` it renders as a **frozen frame 0** (a broken video).
+`tools/make.mjs` handles all of that for you.
 
-**Real images:** a character's `avatar` can be an image URL (rendered as a real round avatar), and a
-script line `{type:"image", image:"<url>", text?}` shows an image attachment. The renderer fetches
-the URL at render time. You can generate images on the fly — e.g. a Pollinations URL is itself the
-image: `avatar:"https://image.pollinations.ai/prompt/naruto%20uzumaki%20anime%20portrait"`. Prefer
-real generated character art over emoji when you can.
+### Flags
+- `-o out.mp4` — choose the output path.
+- `--no-voice` — skip ElevenLabs voices, **keep SFX + music**.
+- `--no-audio` — fully silent (no voice, no SFX, no music).
+- `--no-sfx` / `--no-music` — drop just that layer.
+- `--fps 30` — frame rate (default 30).
+- `-` as the input reads the story JSON from stdin.
 
-## Tools available in this project (run them)
-- `node tools/build-render-package.mjs <episode_id>` → prints a render_package_v1 from Supabase.
-  (Default episode: `70fb8b16-018d-4439-b6f0-cea9e91adb99`, "Kanye Discord".)
-- `node tools/build-composition.mjs --from-db <episode_id>` → writes a standalone animated HTML
-  composition to `out/<id>.html`. Or `node tools/build-composition.mjs` to use the fixture.
+## The story format (what you write)
+```jsonc
+{ "title": "Team 7 Group Chat",
+  "server":  { "name": "Konoha" },                  // optional
+  "characters": [
+    { "name":"Naruto", "color":"#ff8c00", "voice":"Harry" },   // voice by NAME (see list below)
+    { "name":"Sasuke", "avatar":"👁️" },                         // emoji avatar
+    { "name":"Sakura", "avatar":"https://image.pollinations.ai/prompt/sakura%20haruno%20anime%20portrait" } // real image avatar
+  ],
+  "extensions": { "css": ".text{font-style:italic}" },          // raw CSS for anything not modeled
+  "script": [
+    {"type":"act","title":"Episode 1","subtitle":"The Missing Ramen"}, // chapter card
+    {"user":"Naruto","text":"who took my ramen"},
+    {"user":"Sasuke","text":"not me","reply_to":"Naruto"},             // reply by name / "last"
+    {"user":"Sakura","type":"reaction","emoji":"💀","react_to":"Naruto"}, // reaction targets a message
+    {"user":"Naruto","type":"voice_note","seconds":4,"text":"I KNEW IT"}, // spoken voice note
+    {"user":"Naruto","type":"image","image":"https://image.pollinations.ai/prompt/empty%20ramen%20bowl","text":"evidence"}
+  ] }
+```
+- `type` ∈ `message` | `typing` | `reaction` | `ban` | `system` | `join` | `leave` | `act` | `voice_note` | `image`. Default `message`.
+- `delay` = ms before the event. `effect` = a meme effect (e.g. `"vine_boom"`). Timestamps are computed for you — never derive the clock yourself.
+- `react_to` / `reply_to` resolve by **character name** or `"last"` — no event ids.
+- Per-line voice: put `"voice":"<name>"` on a script entry to override that line.
+
+**Voices:** list the available cast with `node tools/elevenlabs.mjs` (or see `list_voices` via MCP),
+then set `voice:"<name>"` on a character. Names resolve to ids automatically. Voices need
+`ELEVENLABS_API_KEY` in `.env`; without it the render still produces video + SFX + music.
+
+**Real images:** a character `avatar` or a `{type:"image","image":"<url>"}` line can be any image
+URL — the renderer fetches it at render time. A Pollinations URL *is* the image
+(`https://image.pollinations.ai/prompt/<description>`). Prefer real generated art over emoji.
+
+## Alternative: the MCP tools (for MCP-capable agents only)
+If you are an agent that can call MCP tools (e.g. Claude Code), the same pipeline is exposed as the
+**holeesheet** MCP server: `make_episode` (one-shot), `compile_script`, `render_episode` +
+`render_status`, `list_voices`, `submit_feedback`. Same input shape as the story format above.
+⚠ Codex/Kimi cannot use MCP in Open Design — use the CLI above instead.
+
+## Other tools in the project
+- `node tools/make.mjs <story.json>` → story → MP4 (the main path, above).
+- `node tools/build-render-package.mjs <episode_id>` → print a render_package_v1 from Supabase.
+- `node tools/build-composition.mjs --from-db <episode_id>` → just the HTML composition (no render).
 - `node tools/validate-package.mjs <pkg.json>` → check a package is well-formed.
-- Credentials/data come from `.env` (Supabase). See `AGENTS.md` for the full map.
+- Credentials/data come from `.env` (Supabase, ElevenLabs). See `AGENTS.md` for the full map.
 
-## render_package_v1 shape (what you're rendering)
+## render_package_v1 shape (what `make.mjs` produces and renders)
 `{ meta, episode{title,platform,duration_seconds}, server{name,theme}, characters[{display_name,
 handle,role_color,is_bot}], channels[{name}], scenes[], timeline[{start_time,duration,event_type,
-character_id,content,attention_event,effects,posted_at}], assets[], effects[], rendering{aspect_ratio,
-resolution:"1080x1920",fps:30} }`. Timeline `event_type` ∈ message | typing | reaction | ban |
-system | join | leave. Reactions point at `content.target_event_id`.
-
-⚠ **Timestamps:** render the chat clock from each event's **`posted_at`** string (e.g. "Today at 4:36 PM")
-— it's pre-computed monotonic. Do NOT derive the time from `start_time` (that's animation seconds;
-mapping it to a clock wraps past 12h and produces out-of-order timestamps).
-
-## Visual contract — make it look like real Discord (use the `discord` design system)
-Pull tokens from the `discord` design-system. Non-negotiables:
-- Dark 3-step depth: server rail `#1e1f22`, channel column `#2b2d31`, chat surface `#313338`.
-- Blurple `#5865f2` ONLY for accents/mentions/"you". gg-sans. 16px+ body (scaled up for 1080w).
-- Left **server rail** with rounded-square server icons (active = white pill). A channel header
-  (`# general`, server name, member hint). Tight message rows, grouped by consecutive author.
-- Avatars = solid role-colored circles w/ white initial + status dot. `@mentions` render as
-  blurple pills. Reactions = Discord reaction pills. ban/system = centered muted/red rows.
-- No dead space: open on a "Welcome to #general" marker, let the chat fill from the bottom.
-
-## Animation — FRAME-DRIVEN (critical for rendering)
-Do NOT animate with bare `requestAnimationFrame` real-time playback — it does not run in a
-headless render context. Expose a pure `render(t)` (or use HyperFrames/Remotion frame model):
-each element's enter progress = clamp((t - event.start_time)/0.3, 0, 1). The renderer sets the
-clock per frame. `attention_event` / `vine_boom` effects = brief shake/pulse.
+character_id,content,attention_event,effects,posted_at}], assets[], effects[], audio,
+rendering{aspect_ratio,resolution:"1080x1920",fps:30} }`. Each timeline event carries a
+pre-computed monotonic **`posted_at`** ("Today at 4:36 PM") — the chat clock renders from that, never
+from `start_time` (animation seconds).
 
 ## Output
-1. Build/refresh the composition for the requested `episode_id` (default Kanye).
-2. Render it to **MP4 (1080x1920, 30fps, h264)** using the **video-hyperframes** skill.
-3. Upload to the Supabase `renders` bucket (or leave the MP4 path for the worker).
-
-Start `render/discord-template.html` is a working baseline — improve its design, keep it
-frame-driven, and feed it the render_package.
+`tools/make.mjs` writes the MP4 to `renders\<id>.mp4` (1080x1920, 30fps, h264) and prints the path.
+Hand that path back, or upload it to the Supabase `renders` bucket.
