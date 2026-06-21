@@ -32,7 +32,8 @@ episode, so don't re-learn them, apply them. The non-negotiables:
 - **Give each character ONE comedic engine** and run it (see `character_dynamics`; e.g. Naruto = chaos without trying, Sasuke = too-serious, Gaara = dry).
 - **End scenes on reactions**, plant callbacks that pay off minutes later, layer emotional beats between jokes.
 - **Watch-only**: every "interactive" beat plays out as dialogue/action — no buttons.
-- **Self-critique like a director** against the bible's checklist, fix it, *then* render.
+- **Interpret, don't read the interface.** The chat is the medium; the *story is what happens between the messages*. The pipeline auto-narrates a literal fallback ("Karen deleted a message"), but YOU make it a story: add a `narration` field to any event to override it with interpretation (`{user:"Karen",type:"delete",narration:"Karen quietly takes back the thing she can't unsay."}`), and drop standalone `{type:"narration",text:"…"}` beats between messages to carry mood, momentum, and who's arriving. You supply the meaning — don't make the renderer guess.
+- **Self-critique like a director** against the bible's checklist, fix it, *then* render. Use `review_episode` (or read the `listener.txt`/`review.json` a render writes) to hear what a screen-off viewer hears and catch dead air, cut-off voices, or events that pass silently.
 
 ## ⚡ THE WORKFLOW — run the CLI, do NOT hand-roll HTML
 The fastest correct path to a real MP4 is **one command**. Write the story as JSON, then run
