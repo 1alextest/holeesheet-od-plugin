@@ -20,10 +20,32 @@ HoleeSheet project — prefer its tools over re-inventing.
 > **Project root (run all commands from here):**
 > `C:\Users\adowner.FSLADS\Desktop\Projects\New folder\opendesign\HooLeeSheet\HoleeSheet_Project`
 
+## ✍️ READ FIRST — story craft (this is what makes it good, not generic)
+Open **[bible/production-bible.json](../../../bible/production-bible.json)** (or call the `get_story_bible`
+MCP tool) and follow it. It's distilled from many real iterations — these lessons were re-learned every
+episode, so don't re-learn them, apply them. The non-negotiables:
+- **Open with chaos in the first 5–10s** — a mystery/argument/confession/reveal. Never open on setup.
+- **The premise is the excuse; the interactions are the content.** Don't narrate "a confession channel" — show the chaos of characters trapped in it.
+- **Write real jokes, not emoji.** Dry, deadpan, absurdist escalation with straight-man reactions. Emoji punctuate; they aren't the joke.
+- **Messy, not orderly** — overlaps, interruptions, reactions before a message finishes, edited/deleted/corrected messages, multiple threads. No tidy turn-taking.
+- **Vary everything** — never recycle the last premise/POV/format (see the bible's premise library). Respect canon unless it's a deliberate AU.
+- **Give each character ONE comedic engine** and run it (see `character_dynamics`; e.g. Naruto = chaos without trying, Sasuke = too-serious, Gaara = dry).
+- **End scenes on reactions**, plant callbacks that pay off minutes later, layer emotional beats between jokes.
+- **Watch-only**: every "interactive" beat plays out as dialogue/action — no buttons.
+- **Self-critique like a director** against the bible's checklist, fix it, *then* render.
+
 ## ⚡ THE WORKFLOW — run the CLI, do NOT hand-roll HTML
 The fastest correct path to a real MP4 is **one command**. Write the story as JSON, then run
 `tools/make.mjs`. It compiles your script into a valid render_package, renders the video
 (HyperFrames), and adds voices + SFX + music — and prints the MP4 path.
+
+> ⚠️ **Why this matters (40+ wasted iterations):** hand-writing a big Discord HTML composition is the
+> #1 failure mode — the file gets **truncated** mid-code, the JS breaks, and the "Start" button does
+> nothing. It also drags in a WebAudio player whose **BGM ducking, settings drawer, scrub bar, and TTS
+> queue** get re-broken every single time (hard pump, voice 4-5 min behind text, settings stuck open).
+> The pipeline kills all of that: a small JSON script can't truncate, voices are pre-rendered and
+> time-aligned, music sidechain-ducks under speech in the mix, and a rendered MP4 needs **no player**.
+> Don't hand-roll HTML. Write the JSON, run `make.mjs`.
 
 ```bash
 cd "C:\Users\adowner.FSLADS\Desktop\Projects\New folder\opendesign\HooLeeSheet\HoleeSheet_Project"
